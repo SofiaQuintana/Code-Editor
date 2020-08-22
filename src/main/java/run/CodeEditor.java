@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 package run;
-
+import graphical_user_interface.PrincipalFrame;
 /**
  *
  * @author zofia
@@ -16,6 +16,8 @@ public class CodeEditor {
      */
     public static void main(String[] args) {
         // TODO code application logic here
+        PrincipalFrame principal = new  PrincipalFrame();
+        principal.setVisible(true);
     }
     
 }
