@@ -35,6 +35,7 @@ public class PrincipalFrame extends javax.swing.JFrame {
     private FileDriver fileDriver;
     private LanguageLexer lexer;
     private LanguageParser parser;
+    private Errores erroresDialog;
     private static final FileNameExtensionFilter languageFilter = new FileNameExtensionFilter("LENGUAJE", "len");
   
     
@@ -125,7 +126,9 @@ public class PrincipalFrame extends javax.swing.JFrame {
        if(errors.isEmpty()) {
            executeInstructions(parser.AST);
        } else {
-           
+           erroresDialog = new Errores(this, true);
+           erroresDialog.setVisible(true);
+           erroresDialog.setText(errors);
        }
     }
     
