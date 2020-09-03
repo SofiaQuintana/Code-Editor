@@ -127,8 +127,8 @@ public class PrincipalFrame extends javax.swing.JFrame {
            executeInstructions(parser.AST);
        } else {
            erroresDialog = new Errores(this, true);
-           erroresDialog.setVisible(true);
            erroresDialog.setText(errors);
+           erroresDialog.setVisible(true);
        }
     }
     
