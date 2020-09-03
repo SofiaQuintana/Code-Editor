@@ -7,6 +7,7 @@ package graphical_user_interface;
 
 import java.awt.Color;
 import java.awt.GridLayout;
+import java.io.File;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -21,8 +22,10 @@ public class Tab extends JPanel{
     private JScrollPane scroll;
     private boolean saved;
     private String title;
+    private String path;
+    private int index;
 
-    public Tab(boolean saved, String title) {
+    public Tab(boolean saved, String title, int index, String path) {
         super(new GridLayout());
         this.saved = saved;
         this.title = title;
@@ -34,12 +37,18 @@ public class Tab extends JPanel{
         this.scroll = new JScrollPane(textArea);
         this.scroll.setRowHeaderView(lineCounter);
         this.add(scroll);
+        this.index = index;
+        this.path = path;
     }
 
     public String getText() {
         return textArea.getText();
     }
 
+    public void setText(String text) {
+        this.textArea.setText(text);
+    }
+    
     public boolean isSaved() {
         return saved;
     }
@@ -54,6 +63,14 @@ public class Tab extends JPanel{
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
     }
     
 }

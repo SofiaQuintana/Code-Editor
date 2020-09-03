@@ -5,7 +5,21 @@
  */
 package graphical_user_interface;
 
+import abstract_syntax_tree.Instruction;
+import drivers.FileDriver;
+import environment.GlobalError;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import lexer.LanguageLexer;
+import parser.LanguageParser;
 
 /**
  *
@@ -14,13 +28,24 @@ import java.util.LinkedList;
 public class PrincipalFrame extends javax.swing.JFrame {
     private int unsavedTabCounter;
     private LinkedList<Tab> tabs;
+    private LinkedList<GlobalError> errors;
     private Tab selectedTab;
+    private int selectedTabIndex;
+    private JFileChooser chooser;
+    private FileDriver fileDriver;
+    private LanguageLexer lexer;
+    private LanguageParser parser;
+    private static final FileNameExtensionFilter languageFilter = new FileNameExtensionFilter("LENGUAJE", "len");
+  
+    
     /**
      * Creates new form PrincipalFrame
      */
     public PrincipalFrame() {
         initComponents();
         this.tabs = new LinkedList<>();
+        this.errors = new LinkedList<>();
+        this.fileDriver = new FileDriver();
         this.setExtendedState(MAXIMIZED_BOTH);
         this.setLocationRelativeTo(null);
         this.unsavedTabCounter = 0;
@@ -29,14 +54,85 @@ public class PrincipalFrame extends javax.swing.JFrame {
     /*Crea una nueva pestana*/
     private Tab createNewTab() {
         unsavedTabCounter++;
-        Tab tab = new Tab(false, "Unsaved Document " + unsavedTabCounter);
+        Tab tab = new Tab(false, "Untitled Document " + unsavedTabCounter, tabs.size(), "");
         return tab;
     }
     
+    /*Agrega al tabbed panel una nueva pestana*/
     private void addTab(Tab tab) {
         tabs.add(tab);
-        tabbedPanel.addTab(tab.getTitle() ,tab);
+        tabbedPanel.addTab(tab.getTitle() , new ImageIcon(getClass().getResource("/close.png")), tab);
         selectedTab = tab;
+    }
+    
+    private void openFile() throws IOException {
+        this.chooser = new JFileChooser();
+        this.chooser.setFileFilter(languageFilter);
+         int option = chooser.showOpenDialog(this);
+        if(option == JFileChooser.APPROVE_OPTION) {
+            File file = chooser.getSelectedFile();
+            String fileName = file.getName();
+            String content = fileDriver.readInputFile(file);
+            selectedTab = new Tab(true, fileName, tabs.size(), file.getPath());
+            selectedTab.setText(content);
+            addTab(selectedTab);
+        }
+    }
+    
+    private void removeTab(int index) {
+        int selected = JOptionPane.showConfirmDialog(this, "Desea guardar los cambios realizados? ", "Guardado", JOptionPane.QUESTION_MESSAGE);
+        switch (selected) {
+            case JOptionPane.OK_OPTION:
+                //guardar
+                tabbedPanel.removeTabAt(index);
+                tabs.remove(index);
+            break;
+            case JOptionPane.NO_OPTION:
+                tabbedPanel.removeTabAt(index);
+                tabs.remove(index);
+            break;
+        }
+    }
+    
+    private void save() throws IOException {
+        if(selectedTab.getPath().equals("")) {
+            saveAs();
+        } else {
+            File file = new File(selectedTab.getPath());
+            fileDriver.saveFileContent(selectedTab.getText(), file);
+            JOptionPane.showMessageDialog(this, "Se guardo con exito el archivo", "Informacion", JOptionPane.INFORMATION_MESSAGE);
+        }
+        
+    }
+    
+    private void saveAs() throws IOException {
+        chooser = new JFileChooser();
+        int option = chooser.showSaveDialog(this);
+        if(option == JFileChooser.APPROVE_OPTION) {
+            File file = chooser.getSelectedFile();
+            selectedTab.setPath(file.getPath());
+            selectedTab.setName(file.getName());
+            selectedTab.setTitle(file.getName());
+            fileDriver.saveFileContent(selectedTab.getText(), file);
+            JOptionPane.showMessageDialog(this, "Se guardo con exito el archivo", "Informacion", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+    
+    private void analyzeLanguage() throws Exception {
+       this.lexer = new LanguageLexer(new StringReader(selectedTab.getText()), errors);
+       this.parser = new LanguageParser(lexer, errors);
+       this.parser.parse();
+       if(errors.isEmpty()) {
+           executeInstructions(parser.AST);
+       } else {
+           
+       }
+    }
+    
+    private void executeInstructions(LinkedList<Instruction> instructions) {
+        for(Instruction instruction : instructions) {
+            instruction.execute();
+        }
     }
     
     @SuppressWarnings("unchecked")
@@ -46,14 +142,20 @@ public class PrincipalFrame extends javax.swing.JFrame {
         iconBar = new javax.swing.JPanel();
         openButton = new javax.swing.JButton();
         newButton = new javax.swing.JButton();
-        newButton1 = new javax.swing.JButton();
-        newButton2 = new javax.swing.JButton();
-        newButton3 = new javax.swing.JButton();
+        saveButton = new javax.swing.JButton();
         centralPanel = new javax.swing.JPanel();
         tabbedPanel = new javax.swing.JTabbedPane();
         jMenuBar1 = new javax.swing.JMenuBar();
         fileMenu = new javax.swing.JMenu();
+        newItem = new javax.swing.JMenuItem();
+        openItem = new javax.swing.JMenuItem();
+        saveItem = new javax.swing.JMenuItem();
+        saveAsItem = new javax.swing.JMenuItem();
+        exit = new javax.swing.JMenuItem();
         languageMenu = new javax.swing.JMenu();
+        compileItem = new javax.swing.JMenuItem();
+        addLanguageItem = new javax.swing.JMenuItem();
+        deleteLanguageItem = new javax.swing.JMenuItem();
         runMenu = new javax.swing.JMenu();
         viewMenu = new javax.swing.JMenu();
 
@@ -67,6 +169,11 @@ public class PrincipalFrame extends javax.swing.JFrame {
         openButton.setFocusPainted(false);
         openButton.setFocusable(false);
         openButton.setOpaque(true);
+        openButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                openButtonActionPerformed(evt);
+            }
+        });
 
         newButton.setBackground(new java.awt.Color(102, 102, 102));
         newButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/new16.png"))); // NOI18N
@@ -80,39 +187,15 @@ public class PrincipalFrame extends javax.swing.JFrame {
             }
         });
 
-        newButton1.setBackground(new java.awt.Color(102, 102, 102));
-        newButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/new16.png"))); // NOI18N
-        newButton1.setFocusPainted(false);
-        newButton1.setFocusable(false);
-        newButton1.setOpaque(true);
-        newButton1.setRequestFocusEnabled(false);
-        newButton1.addActionListener(new java.awt.event.ActionListener() {
+        saveButton.setBackground(new java.awt.Color(102, 102, 102));
+        saveButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/save16.png"))); // NOI18N
+        saveButton.setFocusPainted(false);
+        saveButton.setFocusable(false);
+        saveButton.setOpaque(true);
+        saveButton.setRequestFocusEnabled(false);
+        saveButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                newButton1ActionPerformed(evt);
-            }
-        });
-
-        newButton2.setBackground(new java.awt.Color(102, 102, 102));
-        newButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/new16.png"))); // NOI18N
-        newButton2.setFocusPainted(false);
-        newButton2.setFocusable(false);
-        newButton2.setOpaque(true);
-        newButton2.setRequestFocusEnabled(false);
-        newButton2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                newButton2ActionPerformed(evt);
-            }
-        });
-
-        newButton3.setBackground(new java.awt.Color(102, 102, 102));
-        newButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/new16.png"))); // NOI18N
-        newButton3.setFocusPainted(false);
-        newButton3.setFocusable(false);
-        newButton3.setOpaque(true);
-        newButton3.setRequestFocusEnabled(false);
-        newButton3.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                newButton3ActionPerformed(evt);
+                saveButtonActionPerformed(evt);
             }
         });
 
@@ -126,21 +209,15 @@ public class PrincipalFrame extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addComponent(newButton, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(newButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(newButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(newButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(909, Short.MAX_VALUE))
+                .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(1009, Short.MAX_VALUE))
         );
         iconBarLayout.setVerticalGroup(
             iconBarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(iconBarLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(iconBarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(newButton3)
-                    .addComponent(newButton2)
-                    .addComponent(newButton1)
+                    .addComponent(saveButton)
                     .addComponent(newButton)
                     .addComponent(openButton))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -151,6 +228,16 @@ public class PrincipalFrame extends javax.swing.JFrame {
 
         tabbedPanel.setBackground(new java.awt.Color(102, 102, 102));
         tabbedPanel.setForeground(new java.awt.Color(255, 255, 255));
+        tabbedPanel.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                tabbedPanelStateChanged(evt);
+            }
+        });
+        tabbedPanel.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tabbedPanelMouseClicked(evt);
+            }
+        });
 
         javax.swing.GroupLayout centralPanelLayout = new javax.swing.GroupLayout(centralPanel);
         centralPanel.setLayout(centralPanelLayout);
@@ -175,11 +262,80 @@ public class PrincipalFrame extends javax.swing.JFrame {
         fileMenu.setForeground(new java.awt.Color(255, 255, 255));
         fileMenu.setText("File");
         fileMenu.setFont(new java.awt.Font("URW Gothic L", 0, 13)); // NOI18N
+
+        newItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_N, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        newItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/new16.png"))); // NOI18N
+        newItem.setText("New");
+        newItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                newItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(newItem);
+
+        openItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        openItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/open16.png"))); // NOI18N
+        openItem.setText("Open");
+        openItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                openItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(openItem);
+
+        saveItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        saveItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/save16.png"))); // NOI18N
+        saveItem.setText("Save");
+        saveItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(saveItem);
+
+        saveAsItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.SHIFT_DOWN_MASK | java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        saveAsItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/saveAs.png"))); // NOI18N
+        saveAsItem.setText("Save As");
+        saveAsItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveAsItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(saveAsItem);
+
+        exit.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_X, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        exit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/close.png"))); // NOI18N
+        exit.setText("Exit");
+        exit.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                exitActionPerformed(evt);
+            }
+        });
+        fileMenu.add(exit);
+
         jMenuBar1.add(fileMenu);
 
         languageMenu.setForeground(new java.awt.Color(255, 255, 255));
         languageMenu.setText("Languages");
         languageMenu.setFont(new java.awt.Font("URW Gothic L", 0, 13)); // NOI18N
+
+        compileItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/compile.png"))); // NOI18N
+        compileItem.setText("Compile");
+        languageMenu.add(compileItem);
+
+        addLanguageItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/add.png"))); // NOI18N
+        addLanguageItem.setText("Add Language");
+        addLanguageItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addLanguageItemActionPerformed(evt);
+            }
+        });
+        languageMenu.add(addLanguageItem);
+
+        deleteLanguageItem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/delete.png"))); // NOI18N
+        deleteLanguageItem.setText("Delete Language");
+        languageMenu.add(deleteLanguageItem);
+
         jMenuBar1.add(languageMenu);
 
         runMenu.setForeground(new java.awt.Color(255, 255, 255));
@@ -217,30 +373,102 @@ public class PrincipalFrame extends javax.swing.JFrame {
         addTab(createNewTab());
     }//GEN-LAST:event_newButtonActionPerformed
 
-    private void newButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newButton1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_newButton1ActionPerformed
+    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
+        try {
+            save();
+            tabs.remove(selectedTab);
+            addTab(selectedTab);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "Error al guardar el archivo", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_saveButtonActionPerformed
 
-    private void newButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newButton2ActionPerformed
+    private void newItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newItemActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_newButton2ActionPerformed
+        addTab(createNewTab());
+    }//GEN-LAST:event_newItemActionPerformed
 
-    private void newButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newButton3ActionPerformed
+    private void openItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openItemActionPerformed
+        try {
+            openFile();
+        } catch (IOException ex) {
+            Logger.getLogger(PrincipalFrame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_openItemActionPerformed
+
+    private void openButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openButtonActionPerformed
+        try {
+            openFile();
+        } catch (IOException ex) {
+            Logger.getLogger(PrincipalFrame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_openButtonActionPerformed
+
+    private void tabbedPanelStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabbedPanelStateChanged
         // TODO add your handling code here:
-    }//GEN-LAST:event_newButton3ActionPerformed
+        selectedTabIndex = tabbedPanel.getSelectedIndex();
+        System.out.println(selectedTabIndex);
+        selectedTab = tabs.get(selectedTabIndex);
+    }//GEN-LAST:event_tabbedPanelStateChanged
+
+    private void tabbedPanelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tabbedPanelMouseClicked
+        if(evt.getClickCount() == 2) { 
+            removeTab(tabbedPanel.getSelectedIndex());
+        }
+    }//GEN-LAST:event_tabbedPanelMouseClicked
+
+    private void exitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitActionPerformed
+        System.exit(0);
+    }//GEN-LAST:event_exitActionPerformed
+
+    private void addLanguageItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addLanguageItemActionPerformed
+        try {
+            analyzeLanguage();
+        } catch (Exception ex) {
+            Logger.getLogger(PrincipalFrame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_addLanguageItemActionPerformed
+
+    private void saveAsItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAsItemActionPerformed
+        try {
+            // TODO add your handling code here:
+            saveAs();
+            tabs.remove(selectedTab);
+            addTab(selectedTab);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "Error al guardar el archivo", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_saveAsItemActionPerformed
+
+    private void saveItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveItemActionPerformed
+        // TODO add your handling code here:
+         try {
+            save();
+            tabs.remove(selectedTab);
+            addTab(selectedTab);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "Error al guardar el archivo", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_saveItemActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenuItem addLanguageItem;
     private javax.swing.JPanel centralPanel;
+    private javax.swing.JMenuItem compileItem;
+    private javax.swing.JMenuItem deleteLanguageItem;
+    private javax.swing.JMenuItem exit;
     private javax.swing.JMenu fileMenu;
     private javax.swing.JPanel iconBar;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenu languageMenu;
     private javax.swing.JButton newButton;
-    private javax.swing.JButton newButton1;
-    private javax.swing.JButton newButton2;
-    private javax.swing.JButton newButton3;
+    private javax.swing.JMenuItem newItem;
     private javax.swing.JButton openButton;
+    private javax.swing.JMenuItem openItem;
     private javax.swing.JMenu runMenu;
+    private javax.swing.JMenuItem saveAsItem;
+    private javax.swing.JButton saveButton;
+    private javax.swing.JMenuItem saveItem;
     private javax.swing.JTabbedPane tabbedPanel;
     private javax.swing.JMenu viewMenu;
     // End of variables declaration//GEN-END:variables

@@ -4,6 +4,8 @@ import parser.sym;
 import environment.GlobalError;
 import java.util.LinkedList;
 
+%%// Area Break
+
 %public
 %class LanguageLexer
 %cup
@@ -12,7 +14,7 @@ import java.util.LinkedList;
 %column
 %states JAVA_CODE, REG_EX, SYM, GRAMMAR
 
-/*Rangos*/space
+/*Rangos*/
 Letter = [a-zA-Z]
 LowerCase = [a-z]
 UpperCase = [A-Z]
@@ -20,14 +22,14 @@ Number = [0-9]
 LineTerminator = \r|\n|\r\n 
 WhiteSpace = {LineTerminator} | [ \t\f\b]
 Int = ({Number})({Number})*
-string = "\"" [^*] ~"\""
-Id = ({Letter})({Letter | Number})*
+Version = ({Int})((".")({Int}))*
+Id = ({Letter})({Letter} | {Number})+
 InputCharacter = [^\r\n]
 TraditionalCommentary = "/*" [^*] ~"*/"
 BasicCommentary = "//" {InputCharacter}* {LineTerminator}?
 Commentary = {TraditionalCommentary} | {BasicCommentary}
 
-% {
+%{
 
     LinkedList<GlobalError> errors;
 
@@ -48,34 +50,36 @@ Commentary = {TraditionalCommentary} | {BasicCommentary}
         System.out.println(token);
     }
 
-    private void lexical_error(String value, int line, int column) {
-        GlobalError error = new GlobalError("lexico", value, "Caracter Invalido", line, column);
+    private void lexical_error(String value, int line, int column, String block) {
+        GlobalError error = new GlobalError("lexico", value, "Elemento invalido en el bloque " + block, line, column);
         errors.add(error);
     }
 
-% } 
+%} 
+
+%%//Area Break
 
 <YYINITIAL> {
-    "nombre"                            { return symbol(sym.NOMBRE, "nombre"); }
-    "version"                             { return symbol(sym.VERSION, "version"); }
-    "autor"                                { return symbol(sym.AUTOR, "autor"); }
-    "lanzamiento"                     { return symbol(sym.LANZAMIENTO, "lanzamiento"); }
-    "extension"                        { return symbol(sym.EXTENSION, "extension"); }  
-    "."                                        { return symbol(sym.DOT, "."); }
-    ";"                                        { return symbol(sym.SEMICOLON, ";"); }
-    ":"                                        { return symbol(sym.COLON, ":"); }
-    "%%"                                   { yybegin(JAVA_CODE); return symbol(sym.SEPARATOR, "%%"); } 
-    {Commentary}                   { /*Do nothing*/ }
-    { Int }                                   { return symbol(sym.INT, Integer.parseInt(yytext())); }
-    { Id }                                    { return symbol(sym.ID, yytext()); }
-    { WhiteSpace }                   { /*Do nothing*/ }
-    [^]                                        { lexical_error((yytext(), yyline+1, yycolumn+1);
+    "%%"                                   { yybegin(JAVA_CODE); printToken(yytext()); return symbol(sym.SEPARATOR, yytext()); } 
+    "nombre"                            { printToken(yytext()); return symbol(sym.NOMBRE, "nombre"); }
+    "version"                             { printToken(yytext()); return symbol(sym.VERSION, "version"); }
+    "autor"                                { printToken(yytext()); return symbol(sym.AUTOR, "autor"); }
+    "lanzamiento"                     { printToken(yytext()); return symbol(sym.LANZAMIENTO, "lanzamiento"); }
+    "extension"                        { printToken(yytext()); return symbol(sym.EXTENSION, "extension"); }  
+    ";"                                        { printToken(yytext()); return symbol(sym.SEMICOLON, ";"); }
+    ":"                                        { printToken(yytext()); return symbol(sym.COLON, ":"); }
+    {Commentary}                   { /*Do nothing*/ printToken(yytext()); }
+    {Int}                                   { printToken(yytext()); return symbol(sym.INT, Integer.parseInt(yytext())); }
+    {Version}                          { printToken(yytext()); return symbol(sym.VER_RES, yytext()); }
+    {Id}                                    { printToken(yytext()); return symbol(sym.ID, yytext()); }
+    {WhiteSpace}                   { /*Do nothing*/ }
+    [^]                                        { printToken(yytext()); lexical_error(yytext(), yyline+1, yycolumn+1, "-informacion de lenguaje-"); }
 }
 
 <JAVA_CODE> {
     "%%"                                     { yybegin(REG_EX); return symbol(sym.SEPARATOR, "%%"); }
-    { WhiteSpace }                     { return symbol(sym.REGEX, yytext()); }
-    [^]                                          {  return symbol(sym.JAVAC, yytext(); }
+    {WhiteSpace}                     { return symbol(sym.REGEX, yytext()); }
+    [^]                                          {  return symbol(sym.JAVAC, yytext()); }
 }
 
 <REG_EX> {
@@ -88,19 +92,19 @@ Commentary = {TraditionalCommentary} | {BasicCommentary}
     "["                                        { return symbol(sym.SQUAREB_O, "["); }
     "]"                                        { return symbol(sym.SQUAREB_C, "]"); }
     "%%"                                   { yybegin(SYM); return symbol(sym.SEPARATOR, "%%"); }
-    "\t"                                     { return symbol(sym.TAB, "\t"); }
-    "\n"                                    { return symbol(sym.NEW_LINE, "\n"); }
-    "\b"                                    { return symbol(sym.SPACE, "\b"); }
+    "\""                                     { return symbol(sym.QUOTE, "\""); }
+    "\\t"                                     { return symbol(sym.TAB, "\t"); }
+    "\\n"                                    { return symbol(sym.NEW_LINE, "\n"); }
+    "\\b"                                    { return symbol(sym.SPACE, "\b"); }
     "[0-9]"                                 { return symbol(sym.NUMBER_RANK, "[0-9]"); }
     "[a-z]"                                  { return symbol(sym.LETTER_RANK, "[a-z]"); }
     "="                                       { return symbol(sym.EQUAL, "="); }
      ";"                                       { return symbol(sym.SEMICOLON, ";"); }
     "&"                                       { return symbol(sym.AMPERSAND, "&"); }
-    { Id }                                    { return symbol(sym.ID, yytext()); }
+    {Id}                                    { return symbol(sym.ID, yytext()); }
     {Commentary}                   { /*Do nothing*/ }
     { WhiteSpace }                   { /*Do nothing*/ }
-    { string }                             {  return symbol(sym.STRING, yytext(); }
-    [^]                                        { lexical_error((yytext(), yyline+1, yycolumn+1);
+    [^]                                        { return symbol(sym.CHAR, yytext()); }
 }
 
 <SYM> {
@@ -115,23 +119,23 @@ Commentary = {TraditionalCommentary} | {BasicCommentary}
     ({LowerCase})+                  { return symbol(sym.LOWER_C, yytext()); }
     ({UpperCase})+                  { return symbol(sym.UPPER_C, yytext()); }
     {Commentary}                   { /*Do nothing*/ }
-    { WhiteSpace }                   { /*Do nothing*/ }
-    [^]                                        { lexical_error((yytext(), yyline+1, yycolumn+1);
+    {WhiteSpace}                   { /*Do nothing*/ }
+    [^]                                        { lexical_error(yytext(), yyline+1, yycolumn+1, "-simbolos terminales y no terminales-"); }
 }
 
 <GRAMMAR> {
     "RESULT"                            { return symbol(sym.RESULT, "RESULT"); }
     ":"                                        { return symbol(sym.COLON, ":"); }
+    ";"                                        { return symbol(sym.SEMICOLON, ";"); }
     "::"                                       { return symbol(sym.DOUBLE_COLON, "::"); }
     "="                                       { return symbol(sym.EQUAL, "="); }
     "{"                                        { return symbol(sym.CURLYB_O, "{"); }
     "}"                                        { return symbol(sym.CURLYB_C, "}"); }
-    { Id }                                    { return symbol(sym.ID, yytext()); }
-    ({LowerCase})+                  { return symbol(sym.LOWER_C, yytext()); }
-    ({UpperCase})+                  { return symbol(sym.UPPER_C, yytext()); }
+    ({LowerCase})+                  { printToken(yytext()); return symbol(sym.LOWER_C, yytext()); }
+    ({UpperCase})+                  { printToken(yytext()); return symbol(sym.UPPER_C, yytext()); }
     {Commentary}                   { /*Do nothing*/ }
-    { WhiteSpace }                   { /*Do nothing*/ }
-    [^]                                        {  return symbol(sym.JAVAC, yytext(); }
+    {WhiteSpace}                     { return symbol(sym.REGEX, yytext()); }
+    [^]                                        {  return symbol(sym.JAVAC, yytext()); }
 }
 
- <<EOF>>                            { return symbol(sym.EOF); }
+    <<EOF>>                            { return symbol(sym.EOF); }

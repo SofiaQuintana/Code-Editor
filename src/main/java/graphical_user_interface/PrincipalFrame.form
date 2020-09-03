@@ -22,6 +22,78 @@
               <Font name="URW Gothic L" size="13" style="0"/>
             </Property>
           </Properties>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="newItem">
+              <Properties>
+                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
+                  <KeyStroke key="Ctrl+N"/>
+                </Property>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/new16.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="New"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="newItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="openItem">
+              <Properties>
+                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
+                  <KeyStroke key="Ctrl+O"/>
+                </Property>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/open16.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Open"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="openItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="saveItem">
+              <Properties>
+                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
+                  <KeyStroke key="Ctrl+S"/>
+                </Property>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/save16.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Save"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="saveItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="saveAsItem">
+              <Properties>
+                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
+                  <KeyStroke key="Shift+Ctrl+S"/>
+                </Property>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/saveAs.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Save As"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="saveAsItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="exit">
+              <Properties>
+                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
+                  <KeyStroke key="Ctrl+X"/>
+                </Property>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/close.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Exit"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="exitActionPerformed"/>
+              </Events>
+            </MenuItem>
+          </SubComponents>
         </Menu>
         <Menu class="javax.swing.JMenu" name="languageMenu">
           <Properties>
@@ -33,6 +105,35 @@
               <Font name="URW Gothic L" size="13" style="0"/>
             </Property>
           </Properties>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="compileItem">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/compile.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Compile"/>
+              </Properties>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="addLanguageItem">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/add.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Add Language"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="addLanguageItemActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="deleteLanguageItem">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/delete.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Delete Language"/>
+              </Properties>
+            </MenuItem>
+          </SubComponents>
         </Menu>
         <Menu class="javax.swing.JMenu" name="runMenu">
           <Properties>
@@ -113,12 +214,8 @@
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="newButton" min="-2" pref="32" max="-2" attributes="0"/>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
-                  <Component id="newButton1" min="-2" pref="32" max="-2" attributes="0"/>
-                  <EmptySpace type="separate" max="-2" attributes="0"/>
-                  <Component id="newButton2" min="-2" pref="32" max="-2" attributes="0"/>
-                  <EmptySpace type="separate" max="-2" attributes="0"/>
-                  <Component id="newButton3" min="-2" pref="32" max="-2" attributes="0"/>
-                  <EmptySpace pref="909" max="32767" attributes="0"/>
+                  <Component id="saveButton" min="-2" pref="32" max="-2" attributes="0"/>
+                  <EmptySpace pref="1009" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -127,9 +224,7 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="newButton3" min="-2" max="-2" attributes="0"/>
-                      <Component id="newButton2" min="-2" max="-2" attributes="0"/>
-                      <Component id="newButton1" min="-2" max="-2" attributes="0"/>
+                      <Component id="saveButton" min="-2" max="-2" attributes="0"/>
                       <Component id="newButton" min="-2" max="-2" attributes="0"/>
                       <Component id="openButton" min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -154,6 +249,9 @@
             <Property name="focusable" type="boolean" value="false"/>
             <Property name="opaque" type="boolean" value="true"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="openButtonActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JButton" name="newButton">
           <Properties>
@@ -172,13 +270,13 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="newButtonActionPerformed"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JButton" name="newButton1">
+        <Component class="javax.swing.JButton" name="saveButton">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="66" green="66" red="66" type="rgb"/>
             </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/new16.png"/>
+              <Image iconType="3" name="/save16.png"/>
             </Property>
             <Property name="focusPainted" type="boolean" value="false"/>
             <Property name="focusable" type="boolean" value="false"/>
@@ -186,41 +284,7 @@
             <Property name="requestFocusEnabled" type="boolean" value="false"/>
           </Properties>
           <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="newButton1ActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JButton" name="newButton2">
-          <Properties>
-            <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="66" green="66" red="66" type="rgb"/>
-            </Property>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/new16.png"/>
-            </Property>
-            <Property name="focusPainted" type="boolean" value="false"/>
-            <Property name="focusable" type="boolean" value="false"/>
-            <Property name="opaque" type="boolean" value="true"/>
-            <Property name="requestFocusEnabled" type="boolean" value="false"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="newButton2ActionPerformed"/>
-          </Events>
-        </Component>
-        <Component class="javax.swing.JButton" name="newButton3">
-          <Properties>
-            <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="66" green="66" red="66" type="rgb"/>
-            </Property>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/new16.png"/>
-            </Property>
-            <Property name="focusPainted" type="boolean" value="false"/>
-            <Property name="focusable" type="boolean" value="false"/>
-            <Property name="opaque" type="boolean" value="true"/>
-            <Property name="requestFocusEnabled" type="boolean" value="false"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="newButton3ActionPerformed"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="saveButtonActionPerformed"/>
           </Events>
         </Component>
       </SubComponents>
@@ -269,6 +333,10 @@
               <Color blue="ff" green="ff" red="ff" type="rgb"/>
             </Property>
           </Properties>
+          <Events>
+            <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="tabbedPanelStateChanged"/>
+            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="tabbedPanelMouseClicked"/>
+          </Events>
 
           <Layout class="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout"/>
         </Container>

@@ -1,0 +1,292 @@
+package parser;
+import java_cup.runtime.Symbol;
+import lexer.LanguageLexer;
+import java.util.HashMap;
+import java.util.LinkedList;
+import environment.GlobalError;
+import abstract_syntax_tree.Operation;
+import abstract_syntax_tree.Instruction;
+import abstract_syntax_tree.RegexType;
+import abstract_syntax_tree.SymType;
+import abstract_syntax_tree.RegularExpression;
+import three_method_lexer.Leaf;
+import three_method_lexer.Node;
+import dummy_classes.Language;
+import dummy_classes.Terminal;
+
+parser code {:
+    public LinkedList<Instruction> AST;
+    private LinkedList<GlobalError> errors;
+    private Operation operation;
+
+    public LanguageParser(LanguageLexer lexer, LinkedList<GlobalError> errors) {
+        super(lexer);
+        this.errors = errors;
+        this.AST = new LinkedList<>();      
+    }
+
+     public void syntax_error(Symbol symbol) {
+        String message = "";
+        switch(symbol.toString()) {
+            case "#39": case "#19": case "#17": case "#18": case "#40": case "#20":{ 
+                message = "No se esperaba un signo de agrupacion llave, parentesis o corchete, verifique.";
+            break;
+            } 
+            case "#15": case "#14": case "#13": { 
+                message = "No se esperaba un signo de uni operacion, ya sea '*', '+' o '?', verifique.";
+            break;
+            } 
+            case "#16":{ 
+                message = "No se esperaba un signo de bi operacion, ya sea '|' o '.' verifique.";
+            break;
+            } 
+            case "#24": case "#25": { 
+                message = "No se esperaba un macro ya sea de [a-z] o [0-9], verifique.";
+            break;
+            } 
+            case "#23": case "#21": case "#22":{ 
+                message = "No se esperaba un regex ya sea Espacio, Tabulacion o Nueva Linea, verifique.";
+            break;
+            } 
+            case "#28": message = "No se esperaba un caracter, verifique."; break;
+            case "#41": message = "No se esperaba un numero de version, verifique."; break;
+            case "#35": message = "No se esperaba el ID de un no terminal, verifique."; break;
+            case "#36": message = "No se esperaba el ID de un terminal, verifique."; break;
+            case "#9": message = "No se esperaba un separador '%%', verifique."; break;
+            case "#2": message = "No se esperaba la palabra reservada NOMBRE, verifique."; break;
+            case "#31": message = "No se esperaba la palabra reservada ENTERO, verifique."; break;
+            case "#3": message = "No se esperaba la palabra reservada VERSION, verifique."; break;
+            case "#42": message = "No se esperaba una comilla, verifique."; break;
+            case "#27": message = "No se esperaba un ampersand '&', verifique."; break;
+            case "#33": message = "No se esperaba la palabra reservada CADENA, verifique."; break;
+            case "#32": message = "No se esperaba la palabra reservada REAL, verifique."; break;
+            case "#30": message = "No se esperaba la palabra reservada NO, verifique."; break;
+            case "#4": message = "No se esperaba la palabra reservada AUTOR, verifique."; break;
+            case "#6": message = "No se esperaba la palabra reservada EXTENSION, verifique."; break;
+            case "#29": message = "No se esperaba la palabra reservada TERMINAL, verifique."; break;
+            case "#5": message = "No se esperaba la palabra reservada LANZAMIENTO, verifique."; break;
+            case "#37": message = "No se esperaba la palabra reservada RESULT, verifique."; break;
+            case "#7": message = "No se esperaba punto y coma, verifique"; break;
+            case "#8": message = "No se esperaban dos puntos ':' , verifique"; break;
+            case "#38": message = "No se esperaba doble dos puntos '::' , verifique"; break;
+            case "#34": message = "No se esperaba coma, verifique"; break;
+            case "#26": message = "No se esperaba igual, verifique"; break;
+            case "#10": message = "Puede que su ID no tenga una sintaxis correcta o que se encuentre en un lugar indebido, verifique." ; break;
+            case "#43": message = "Puede que su entero no tenga una sintaxis correcta o que se encuentre en un lugar indebido, verifique." ; break;
+        }
+        System.out.println(message);
+        GlobalError error = new GlobalError("sintactico", (String)symbol.value, message, symbol.right,(symbol.left - 1));
+        errors.add(error);
+    }
+
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception { 
+        System.err.println("Error sintactico irrecuperable en la Linea " + (s.left) + " Columna "+s.right+". Componente " + s.value + " no reconocido."); 
+    }
+
+:}
+
+/* Terminales... (tokens RESULT by the scanner) */
+terminal String NOMBRE, VERSION, AUTOR, LANZAMIENTO, EXTENSION, SEMICOLON, COLON, SEPARATOR, ID, REGEX,
+                           JAVAC, QUESTION_MARK, ASTERISK, PLUS, PIPE, ROUNDB_O, ROUNDB_C, SQUAREB_O, SQUAREB_C, TAB,
+                           NEW_LINE, SPACE, NUMBER_RANK, LETTER_RANK, EQUAL, AMPERSAND, CHAR, TERMINAL,
+                           NO, ENTERO, REAL, CADENA, COMMA, LOWER_C, UPPER_C, RESULT, DOUBLE_COLON, CURLYB_O, CURLYB_C,
+                           VER_RES, QUOTE;
+
+terminal Integer INT;
+
+non terminal actions;
+non terminal String name, version, autor, extension, extended_id, java_code, terminal_id, non_terminal_id, semantic_rules;
+non terminal String code_j;
+non terminal Integer release, character;
+non terminal Language language_info;
+non terminal LinkedList<Instruction> lexical_exp;
+non terminal LinkedList<Terminal> symbols_list;
+non terminal Terminal terminals, non_terminals;
+non terminal SymType symbol_type;
+non terminal Node expression, str, bi_operation, uni_operation;
+non terminal Object grammar, id_asig;
+
+precedence left SQUAREB_O;
+precedence left PIPE;
+precedence left ASTERISK, QUESTION_MARK, PLUS;
+precedence left NEW_LINE, SPACE, TAB;
+precedence left SEMICOLON, CHAR;
+
+/* Grammar */
+start with actions;
+
+actions ::=  language_info:l SEPARATOR java_code:c SEPARATOR lexical_exp:regex SEPARATOR symbols_list SEPARATOR grammar
+                    {: for(Instruction instruction : regex) AST.add(instruction); :}
+                    | language_info:l SEPARATOR SEPARATOR lexical_exp:regex SEPARATOR symbols_list SEPARATOR grammar
+                    {: for(Instruction instruction : regex) AST.add(instruction); :}
+                    | error
+                    ;
+
+language_info ::= name:n                                                                         {: RESULT = new Language(n); :}
+                               | name:n version:v                                                      {: RESULT = new Language(n, v, "not specified", "not specified","not specified"); :}
+                               | name:n autor:a                                                         {: RESULT = new Language(n, "not specified", a, "not specified", "not specified"); :}
+                               | name:n release:r                                                       {: RESULT = new Language(n, "not specified", "not specified", String.valueOf(r), "not specified"); :}
+                               | name:n extension:e                                                  {: RESULT = new Language(n, "not specified", "not specified", "not specified", e); :}
+                               | name:n version:v autor:a                                        {: RESULT = new Language(n, v, a, "not specified", "not specified"); :}
+                               | name:n version:v release:r                                      {: RESULT = new Language(n, v, "not specified", String.valueOf(r), "not specified"); :}
+                               | name:n version:v extension:e                                {: RESULT = new Language(n, v, "not specified", "not specified", e); :}
+                               | name:n autor:a release:r                                         {: RESULT = new Language(n, "not specified", a, String.valueOf(r), "not specified"); :}
+                               | name:n autor:a extension:e                                   {: RESULT = new Language(n, "not specified", a, "not specified", e); :}
+                               | name:n release:r extension:e                                 {: RESULT = new Language(n, "not specified", "not specified", String.valueOf(r), e); :}
+                               | name:n version:v autor:a release:r                        {: RESULT = new Language(n, v, a, String.valueOf(r), "not specified"); :}
+                               | name:n version:v autor:a extension:e                  {: RESULT = new Language(n, v, a, "not specified", e); :}
+                               | name:n autor:a release:r extension:e                   {: RESULT = new Language(n, "not specified", a, String.valueOf(r), e); :}
+                               | name:n version:v autor:a release:r extension:e  {: RESULT = new Language(n, v, a, String.valueOf(r), e); :}
+                               | error
+                               ;
+
+name ::= NOMBRE COLON ID:name SEMICOLON {: RESULT = name; :};
+
+version ::= VERSION COLON VER_RES:ver SEMICOLON {: RESULT = ver; :};
+
+autor ::= AUTOR COLON extended_id:id SEMICOLON {: RESULT = id; :}
+                | AUTOR COLON ID:id SEMICOLON {: RESULT = id; :};
+
+release ::= LANZAMIENTO COLON INT:year SEMICOLON {: RESULT = year; :};
+
+extension ::= EXTENSION COLON ID:id SEMICOLON {: RESULT = id; :};
+
+extended_id ::= extended_id:phrase ID:id    {: RESULT = phrase + " " + id; :}
+                            | ID:id                                     {: RESULT = id; :}
+                            ;
+
+java_code ::= java_code:code JAVAC:ch                 {: RESULT = code + ch; :}
+                       | java_code:code REGEX:regex         {: RESULT = code + regex; :}
+                       | JAVAC:ch                                            {: RESULT = ch; :}
+                       | REGEX:regex                                     {: RESULT = regex; :}
+                       ;
+
+lexical_exp ::= lexical_exp:all ID:id EQUAL expression:exp SEMICOLON {: RESULT = all; RESULT.add(new RegularExpression(id, exp, expright, expleft-1, false)); :}
+                         | lexical_exp:all AMPERSAND:id EQUAL expression:exp SEMICOLON {: RESULT = all; RESULT.add(new RegularExpression(id, exp, expright, expleft-1, true)); :}
+                         | ID:id EQUAL expression:exp SEMICOLON             {: RESULT = new LinkedList<>(); RESULT.add(new RegularExpression(id, exp, expright, expleft-1, false)); :}
+                         | AMPERSAND:id EQUAL expression:exp SEMICOLON      {: RESULT = new LinkedList<>(); RESULT.add(new RegularExpression(id, exp, expright, expleft-1, true)); :}
+                         ;
+
+expression ::= expression:left bi_operation:par ROUNDB_O expression:c ROUNDB_C uni_operation:right 
+                           {: RESULT = (Node) new Operation(RegexType.MULTI_C, null, left, right, par, c, cright, cleft - 1).execute(); :}
+
+                         | expression:left bi_operation:par SQUAREB_O expression:c SQUAREB_C uni_operation:right 
+                           {: RESULT = (Node) new Operation(RegexType.MULTI_C, null, left, right, par, c, cright, cleft - 1).execute(); :}
+
+                         | expression:left bi_operation:par ROUNDB_O expression:r ROUNDB_C 
+                           {: RESULT = (Node) new Operation(RegexType.BI_C, null, left, r, par, null, rright, rleft-1).execute(); :}
+
+                         | expression:left bi_operation:par SQUAREB_O expression:r SQUAREB_C
+                           {: RESULT = (Node) new Operation(RegexType.BI_C, null, left, r, par, null, rright, rleft-1).execute(); :}
+
+                         | ROUNDB_O expression:l ROUNDB_C uni_operation:par 
+                           {: RESULT = (Node) new Operation(RegexType.UNI_C, null, l, null, par, null, lright, lleft-1).execute(); :}
+
+                         | SQUAREB_O expression:l SQUAREB_C uni_operation:par 
+                           {: RESULT = (Node) new Operation(RegexType.UNI_C, null, l, null, par, null, lright, lleft-1).execute(); :}
+
+                         | ROUNDB_O expression:exp ROUNDB_C {: RESULT = exp; :}
+
+                         | SQUAREB_O expression:exp SQUAREB_C {: RESULT = exp; :}
+
+                         | expression:left bi_operation:par str:c uni_operation:right 
+                            {: RESULT = (Node) new Operation(RegexType.MULTI_C, null, left, right, par, c, cright, cleft-1).execute(); :}
+
+                         | expression:left bi_operation:par NUMBER_RANK:val uni_operation:right
+                           {: RESULT = (Node) new Operation(RegexType.MULTI_C, null, left, right, par, (Node) new Operation(RegexType.NUMBER_MACRO, null, null, null, null, val).execute(), valright, valleft-1).execute(); :}
+
+                         | expression:left bi_operation:par LETTER_RANK:val uni_operation:right
+                           {: RESULT = (Node) new Operation(RegexType.MULTI_C, null, left, right, par, (Node) new Operation(RegexType.LETTER_MACRO, null, null, null, null, val).execute(), valright, valleft-1).execute(); :}
+
+                         | expression:left bi_operation:par str:right 
+                           {: RESULT = (Node) new Operation(RegexType.BI_C, null, left, right, par, null, rightright, rightleft-1).execute(); :}
+
+                         | expression:left bi_operation:par NUMBER_RANK:val 
+                           {: RESULT = (Node) new Operation(RegexType.BI_C, null, left, (Node) new Operation(RegexType.NUMBER_MACRO, null, null, null, null, val).execute(), par, null, valright, valleft-1).execute(); :}
+                         | expression:left bi_operation:par LETTER_RANK:val 
+                           {: RESULT = (Node) new Operation(RegexType.BI_C, null, left, (Node) new Operation(RegexType.LETTER_MACRO, null, null, null, null, val).execute(), par, null, valright, valleft-1).execute(); :}
+                       
+                         | str:left uni_operation:par
+                           {: RESULT = (Node) new Operation(RegexType.UNI_C, null, left, null, par, null, leftright, leftleft-1).execute(); :}
+
+                         | NUMBER_RANK:val uni_operation:par
+                           {: RESULT = (Node) new Operation(RegexType.UNI_C, null, (Node) new Operation(RegexType.NUMBER_MACRO, null, null, null, null, val).execute(), null, par, null, valright, valleft-1).execute(); :}
+
+                         | LETTER_RANK:val uni_operation:par
+                           {: RESULT = (Node) new Operation(RegexType.UNI_C, null, (Node) new Operation(RegexType.LETTER_MACRO, null, null, null, null, val).execute(), null, par, null, valright, valleft-1).execute(); :}
+
+                         | str:val {: RESULT = val; :}
+                         | NUMBER_RANK:val {: RESULT = (Node) new Operation(RegexType.NUMBER_MACRO, null, null, null, null, val).execute(); :} 
+                         | LETTER_RANK:val  {: RESULT = (Node) new Operation(RegexType.LETTER_MACRO, null, null, null, null, val).execute(); :} 
+                         | error 
+                         ;
+
+str ::= str:st character:ch          {: RESULT = (Node) new Operation(RegexType.CONCAT, new Leaf(ch, true), st, null, null, null, chright, chleft -1).execute(); :}
+           | QUOTE str:st QUOTE     {: RESULT = st; :}
+           | character:ch                   {: RESULT =  new Node(new Leaf(ch, true)); :}
+           ;
+
+bi_operation ::= PIPE       {: RESULT = new Node(new Leaf((int)'|', RegexType.OR, false)); :}
+                            | {: RESULT = new Node(new Leaf((int) '.', RegexType.CONCAT, false)); :}
+                            ;
+
+uni_operation ::= ASTERISK                   {: RESULT = new Node(new Leaf((int)'*', RegexType.KLEENE, false)); :}
+                               | PLUS                         {: RESULT = new Node(new Leaf((int)'+', RegexType.PLUS, false)); :}
+                               | QUESTION_MARK    {: RESULT = new Node(new Leaf((int)'?', RegexType.QUESTION_MARK, false)); :}
+                               ;
+
+character ::= CHAR:var                              {: RESULT = (int) var.charAt(0); :}
+                       | TAB                                      {: RESULT = (int) "\t".charAt(0); :}
+                       | NEW_LINE                           {: RESULT = (int) "\n".charAt(0); :}
+                       | SPACE                                 {: RESULT = (int) " ".charAt(0); :}
+                       ;
+
+symbols_list ::= terminals:terminal SEMICOLON symbols_list:all           {: RESULT = all; RESULT.add(terminal); :}
+                            | non_terminals:non SEMICOLON symbols_list:all        {: RESULT = all; RESULT.add(non); :}
+                            | terminals:terminal SEMICOLON                                   {: RESULT = new LinkedList<>(); RESULT.add(terminal); :}
+                            | non_terminals:non SEMICOLON                                  {: RESULT = new LinkedList<>(); RESULT.add(non); :}
+                            ;
+
+terminals ::= TERMINAL symbol_type:type terminal_id:id      {: RESULT = new Terminal(id, type, true); :}
+                       | TERMINAL terminal_id:id                                   {: RESULT = new Terminal(id, SymType.NONE, true); :}
+                       ;
+
+terminal_id ::= LOWER_C:id COMMA terminal_id:all          {: RESULT = id + ',' + all; :}
+                          | LOWER_C:id                                               {: RESULT = id; :}
+                          ;
+
+non_terminals ::= NO TERMINAL symbol_type:type non_terminal_id:id {: RESULT = new Terminal(id, type, false); :}
+                               | NO TERMINAL  non_terminal_id:id                              {: RESULT = new Terminal(id, SymType.NONE, false); :}
+                               ;
+
+non_terminal_id ::= UPPER_C:id COMMA non_terminal_id:all            {: RESULT = id + ';' + all; :} 
+                                  | UPPER_C:id                                                          {: RESULT = id; :}
+                                  ;
+
+symbol_type ::= ENTERO      {: RESULT = SymType.INTEGER; :}
+                            | REAL          {: RESULT = SymType.REAL; :}
+                            | CADENA    {: RESULT = SymType.STRING; :}
+                            ;
+
+grammar ::= LOWER_C DOUBLE_COLON id_asig semantic_rules {: RESULT = null; :}
+                      | UPPER_C DOUBLE_COLON id_asig semantic_rules {: RESULT = null; :}
+                      ;
+
+id_asig ::= LOWER_C:ter  id_asig:all {: RESULT = null; :}
+                  | UPPER_C:non  id_asig:all {: RESULT = null;  :}
+                  | LOWER_C:ter {:RESULT = null; :}
+                  | UPPER_C:non {: RESULT = null; :}
+                  ;
+
+semantic_rules ::= CURLYB_O RESULT:r EQUAL:e code_j:c CURLYB_C     {: RESULT = r + " " +  e + " " +  c; :}
+                                | CURLYB_O code_j:c CURLYB_C                                     {: RESULT = c; :}
+                                ;
+
+code_j ::= code_j:e LOWER_C:c           {: RESULT = e + c; :}
+               | code_j:e UPPER_C:c          {: RESULT = e + c; :}
+               | LOWER_C:c                      {: RESULT =c; :}
+               | UPPER_C:c                      {: RESULT = c; :}
+               | REGEX:r                          {: RESULT = r; :}
+               | JAVAC:j                           {: RESULT = j; :}
+               | SEMICOLON:j                           {: RESULT = j; :}
+               ;
